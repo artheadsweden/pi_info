@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Info</title>
+    <style>
+        body {
+            background: black;
+            color: aliceblue;
+        }
+
+        img {
+            width: 52px;
+            height: 52px;
+        }
+
+        .radio-icon {
+            width: 75px;
+            height: 75px;
+
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .radio-cell {
+            width: 150px;
+            vertical-align: top;
+        }
+
+        .playing-idle {
+            color: #434343;
+        }
+
+        .data-cell {
+            width: 150px;
+            height: 55px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="center">
+    <h1>Boge Mojner 192</h1>
+    <h2>{{ today['date'] }}</h2>
+</div>
+<table class="full-table">
+    <tr>
+        <td class="data-cell">
+            <h2>Nu</h2>
+        </td>
+        <td class="data-cell">
+            <h2>Vind</h2>
+        </td>
+        <td class="data-cell">
+            <h2>6 timmar</h2>
+        </td>
+        <td class="data-cell">
+            <h2>12 timmar</h2>
+        </td>
+        <td class="data-cell">
+            <h2>Post</h2>
+        </td>
+        <td class="data-cell">
+            <h2>Sopor</h2>
+        </td>
+    </tr>
+    <tr>
+        <td class="data-cell">
+            <img src="{{ url_for('static', filename='/icons/' + weather_data['next_1_hour_icon']) }}" alt="Next Hour">
+        </td>
+        <td class="data-cell">
+            <img src="{{ url_for('static', filename='/icons/' + weather_data['wind_direction']) }}" alt="Next Hour">
+        </td>
+        <td class="data-cell">
+            <img src="{{ url_for('static', filename='/icons/' + weather_data['next_6_hour_icon']) }}" alt="Next Hour">
+        </td>
+        <td class="data-cell">
+            <img src="{{ url_for('static', filename='/icons/' + weather_data['next_12_hour_icon']) }}" alt="Next Hour">
+        </td>
+        <td class="data-cell">
+            <img src="{{ url_for('static', filename='/icons/mail.png') }}" alt="Next Hour">
+        </td>
+        <td class="data-cell">
+            <img src="{{ url_for('static', filename='/icons/trash.png') }}" alt="Next Hour">
+        </td>
+    </tr>
+    <tr>
+        <td class="data-cell">
+            <h2>{{ weather_data['air_temp'] }}&#176;</h2>
+        </td>
+        <td class="data-cell">
+            <h2>{{ weather_data['wind_speed'] }}m/s</h2>
+        </td>
+        <td class="data-cell">
+            <h2>{{ weather_data['next_6_hour_min_temp'] }}&#176;</h2>
+        </td>
+        <td class="data-cell">
+            <h2>{{ weather_data['next_12_hour_temp'] }}&#176;</h2>
+        </td>
+        <td class="data-cell">
+            <h2>{{ mail_date }}</h2>
+        </td>
+        <td class="data-cell">
+            <h2>{{ garbage_date }}</h2>
+        </td>
+    </tr>
+    <tr>
+        <td class="data-cell"></td>
+    </tr>
+</table>
+<table>
+    <tr>
+        <td class="data-cell"></td>
+        {% for channel in channels %}
+            {% if channel['name'].startswith('P4') %}
+                {% if 'Gotland' in channel['name'] %}
+                    <td class="center radio-cell">
+                        <a href="{{ channel['stream'] }}"><img id="{{ channel['name'] }}" class="radio-icon"
+                                                               src="{{ channel['image'] }}"></a>
+                    </td>
+                {% endif %}
+            {% else %}
+                <td class="center radio-cell">
+                    <a href="{{ channel['stream'] }}"><img id="{{ channel['name'] }}" class="radio-icon"
+                                                           src="{{ channel['image'] }}"></a>
+                </td>
+            {% endif %}
+        {% endfor %}
+        <td class="data-cell"></td>
+    </tr>
+    <tr>
+        <td></td>
+        {% for playing in current_programs %}
+            {% if playing['channel']['name'].startswith('P4') %}
+                {% if 'Gotland' in playing['channel']['name'] %}
+                    <td class="center radio-cell">
+                        <h5 class="playing-idle">{{ playing['channel']['currentscheduledepisode']['title'] }}</h5>
+                    </td>
+                {% endif %}
+            {% else %}
+                <td class="center radio-cell">
+                    <h5 class="playing-idle">{{ playing['channel']['currentscheduledepisode']['title'] }}</h5>
+                </td>
+            {% endif %}
+        {% endfor %}
+        <td></td>
+    </tr>
+</table>
+</body>
+</html>

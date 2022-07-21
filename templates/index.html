@@ -38,12 +38,15 @@
             height: 55px;
             text-align: center;
         }
+        .temp-cell {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
 <div class="center">
     <h1>Boge Mojner 192</h1>
-    <h2>{{ today['date'] }}</h2>
+    <h2 id="now">{{ today['date'] }}</h2>
 </div>
 <table class="full-table">
     <tr>
@@ -68,16 +71,16 @@
     </tr>
     <tr>
         <td class="data-cell">
-            <img src="{{ url_for('static', filename='/icons/' + weather_data['next_1_hour_icon']) }}" alt="Next Hour">
+            <img id="now-weather-icon" src="{{ url_for('static', filename='/icons/' + weather_data['next_1_hour_icon']) }}" alt="Next Hour">
         </td>
         <td class="data-cell">
-            <img src="{{ url_for('static', filename='/icons/' + weather_data['wind_direction']) }}" alt="Next Hour">
+            <img id="wind-direction" src="{{ url_for('static', filename='/icons/' + weather_data['wind_direction']) }}" alt="Next Hour">
         </td>
         <td class="data-cell">
-            <img src="{{ url_for('static', filename='/icons/' + weather_data['next_6_hour_icon']) }}" alt="Next Hour">
+            <img id="6-hour-icon" src="{{ url_for('static', filename='/icons/' + weather_data['next_6_hour_icon']) }}" alt="Next Hour">
         </td>
         <td class="data-cell">
-            <img src="{{ url_for('static', filename='/icons/' + weather_data['next_12_hour_icon']) }}" alt="Next Hour">
+            <img id="12-hour-icon" src="{{ url_for('static', filename='/icons/' + weather_data['next_12_hour_icon']) }}" alt="Next Hour">
         </td>
         <td class="data-cell">
             <img src="{{ url_for('static', filename='/icons/mail.png') }}" alt="Next Hour">
@@ -87,28 +90,26 @@
         </td>
     </tr>
     <tr>
-        <td class="data-cell">
-            <h2>{{ weather_data['air_temp'] }}&#176;</h2>
+        <td class="data-cell temp-cell">
+            <h2 id="now-temp">{{ weather_data['air_temp'] }}&#176;</h2>
         </td>
-        <td class="data-cell">
-            <h2>{{ weather_data['wind_speed'] }}m/s</h2>
+        <td class="data-cell temp-cell">
+            <h2 id="wind-speed">{{ weather_data['wind_speed'] }}m/s</h2>
         </td>
-        <td class="data-cell">
-            <h2>{{ weather_data['next_6_hour_min_temp'] }}&#176;</h2>
+        <td class="data-cell temp-cell">
+            <h2 id="6-hour-temp">{{ weather_data['next_6_hour_min_temp'] }}&#176;</h2>
         </td>
-        <td class="data-cell">
-            <h2>{{ weather_data['next_12_hour_temp'] }}&#176;</h2>
+        <td class="data-cell temp-cell">
+            <h2 id="12-hour-temp">{{ weather_data['next_12_hour_temp'] }}&#176;</h2>
         </td>
-        <td class="data-cell">
-            <h2>{{ mail_date }}</h2>
+        <td class="data-cell temp-cell">
+            <h2 id="mail-date">{{ mail_date }}</h2>
         </td>
-        <td class="data-cell">
-            <h2>{{ garbage_date }}</h2>
+        <td class="data-cell temp-cell">
+            <h2 id="garbage-date">{{ garbage_date }}</h2>
         </td>
     </tr>
-    <tr>
-        <td class="data-cell"></td>
-    </tr>
+
 </table>
 <table>
     <tr>
@@ -136,17 +137,66 @@
             {% if playing['channel']['name'].startswith('P4') %}
                 {% if 'Gotland' in playing['channel']['name'] %}
                     <td class="center radio-cell">
-                        <h5 class="playing-idle">{{ playing['channel']['currentscheduledepisode']['title'] }}</h5>
+                        <h5 id="P4" class="playing-idle">{{ playing['channel']['currentscheduledepisode']['title'] }}</h5>
                     </td>
                 {% endif %}
             {% else %}
                 <td class="center radio-cell">
-                    <h5 class="playing-idle">{{ playing['channel']['currentscheduledepisode']['title'] }}</h5>
+                    <h5 id="{{ playing['channel']['name'] }}" class="playing-idle">{{ playing['channel']['currentscheduledepisode']['title'] }}</h5>
                 </td>
             {% endif %}
         {% endfor %}
         <td></td>
     </tr>
 </table>
+    <script>
+        updateUI();
+        setInterval(updateUI, 6000);
+
+        function updateUI() {
+            fetch("http://127.0.0.1:5000/update")
+                .then(response => response.json())
+                .then(msgObj => {
+                    let weatherData = msgObj[0];
+                    let mailDate = msgObj[1];
+                    let garbageDate = msgObj[2];
+                    let channels = msgObj[3];
+                    let currentPrograms = msgObj[4];
+                    let today = msgObj[5];
+                    document.getElementById("now").innerHTML = today.date;
+                    console.log(today);
+                    let nowWeatherIcon = document.getElementById("now-weather-icon");
+                    nowWeatherIcon.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.next_1_hour_icon;
+                    let windDir = document.getElementById("wind-direction");
+                    windDir.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.wind_direction;
+                    let next6HourIcon = document.getElementById("6-hour-icon");
+                    next6HourIcon.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.next_6_hour_icon;
+                    let next12HourIcon = document.getElementById("12-hour-icon");
+                    next12HourIcon.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.next_12_hour_icon;
+                    let airTemp = document.getElementById('now-temp');
+                    airTemp.innerHTML = weatherData.air_temp + "&#176;";
+                    let windSpeed = document.getElementById('wind-speed');
+                    windSpeed.innerHTML = weatherData.wind_speed + 'm/s';
+                    let airTemp6 = document.getElementById('6-hour-temp');
+                    airTemp6.innerHTML = weatherData.next_6_hour_min_temp + "&#176;";
+                    let airTemp12 = document.getElementById('12-hour-temp');
+                    airTemp12.innerHTML = weatherData.next_12_hour_temp + "&#176;";
+                    let mailDateText = document.getElementById('mail-date');
+                    mailDateText.innerHTML = mailDate;
+                    let garbageDateText = document.getElementById('garbage-date');
+                    garbageDateText.innerHTML = garbageDate;
+
+                    let p1 = document.getElementById('P1');
+                    p1.innerHTML = currentPrograms[0].channel.currentscheduledepisode.program.name;
+                    let p2 = document.getElementById('P1');
+                    p2.innerHTML = currentPrograms[1].channel.currentscheduledepisode.program.name;
+                    let p3 = document.getElementById('P1');
+                    p3.innerHTML = currentPrograms[2].channel.currentscheduledepisode.program.name;
+                    let p4 = document.getElementById('P1');
+                    p4.innerHTML = currentPrograms[5].channel.currentscheduledepisode.program.name;
+
+                })
+        }
+    </script>
 </body>
 </html>

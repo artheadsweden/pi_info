@@ -59,9 +59,10 @@ def get_next_mail_date():
     delivery = data['delivery'].split(',')[0]
     delivery_day = delivery.split(' ')[0]
     delivery_month = months.index(delivery.split(' ')[1]) + 1
-    delivery_date = datetime.datetime.strptime(f'{delivery_day}-{delivery_month}-{datetime.datetime.now().year}', '%d-%m-%Y')
+    now = datetime.datetime.now()
+    delivery_date = datetime.datetime.strptime(f'{delivery_day}-{delivery_month}-{now.year} 23:59:59', '%d-%m-%Y %H:%M:%S')
     upcoming = data['upcoming'].split(',')[0]
-    return delivery if delivery_date > datetime.datetime.now() else upcoming
+    return delivery if delivery_date >= datetime.datetime.now() else upcoming
 
 
 def get_next_garbage_date():
@@ -130,6 +131,7 @@ def day_info():
     return data
 
 if __name__ == '__main__':
+    get_next_mail_date()
     channels = radio_channels()
     now_playing = [now_playing(channel['id']) for channel in channels]
     day_info()

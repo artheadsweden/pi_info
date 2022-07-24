@@ -38,13 +38,51 @@
             height: 55px;
             text-align: center;
         }
+
         .temp-cell {
             margin-top: 0;
         }
+
+        #volume-control {
+          width: 300px;
+          height: 15px;
+          -webkit-appearance: none;
+          background: #333;
+          outline: none;
+          border-radius: 15px;
+          overflow: hidden;
+          box-shadow: inset 0 0 5px rgba(0, 0, 0, 1);
+        }
+        #volume-control::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 15px;
+          height: 15px;
+          border-radius: 50%;
+          background: #5AA2F8FF;
+          cursor: pointer;
+          border: 4px solid #333;
+          box-shadow: -407px 0 0 400px #5AA2F8FF;
+        }
+
+        i {
+            color: #5aa2f8;
+            padding: 3px;
+        }
+
+        .header {
+            margin-bottom: -5px;
+        }
+        table {
+            margin-top: -5px;
+        }
+        tr {
+            margin-top: -5px;
+        }
     </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" rel="stylesheet" />
 </head>
 <body>
-<div class="center">
+<div class="center header">
     <h1>Boge Mojner 192</h1>
     <h2 id="now">{{ today['date'] }}</h2>
 </div>
@@ -71,16 +109,20 @@
     </tr>
     <tr>
         <td class="data-cell">
-            <img id="now-weather-icon" src="{{ url_for('static', filename='/icons/' + weather_data['next_1_hour_icon']) }}" alt="Next Hour">
+            <img id="now-weather-icon"
+                 src="{{ url_for('static', filename='/icons/' + weather_data['next_1_hour_icon']) }}" alt="Next Hour">
         </td>
         <td class="data-cell">
-            <img id="wind-direction" src="{{ url_for('static', filename='/icons/' + weather_data['wind_direction']) }}" alt="Next Hour">
+            <img id="wind-direction" src="{{ url_for('static', filename='/icons/' + weather_data['wind_direction']) }}"
+                 alt="Next Hour">
         </td>
         <td class="data-cell">
-            <img id="6-hour-icon" src="{{ url_for('static', filename='/icons/' + weather_data['next_6_hour_icon']) }}" alt="Next Hour">
+            <img id="6-hour-icon" src="{{ url_for('static', filename='/icons/' + weather_data['next_6_hour_icon']) }}"
+                 alt="Next Hour">
         </td>
         <td class="data-cell">
-            <img id="12-hour-icon" src="{{ url_for('static', filename='/icons/' + weather_data['next_12_hour_icon']) }}" alt="Next Hour">
+            <img id="12-hour-icon" src="{{ url_for('static', filename='/icons/' + weather_data['next_12_hour_icon']) }}"
+                 alt="Next Hour">
         </td>
         <td class="data-cell">
             <img src="{{ url_for('static', filename='/icons/mail.png') }}" alt="Next Hour">
@@ -114,89 +156,112 @@
 <table>
     <tr>
         <td class="data-cell"></td>
-        {% for channel in channels %}
-            {% if channel['name'].startswith('P4') %}
-                {% if 'Gotland' in channel['name'] %}
-                    <td class="center radio-cell">
-                        <a href="{{ channel['stream'] }}"><img id="{{ channel['name'] }}" class="radio-icon"
-                                                               src="{{ channel['image'] }}"></a>
-                    </td>
-                {% endif %}
-            {% else %}
-                <td class="center radio-cell">
-                    <a href="{{ channel['stream'] }}"><img id="{{ channel['name'] }}" class="radio-icon"
-                                                           src="{{ channel['image'] }}"></a>
-                </td>
-            {% endif %}
+        {% for channel in radio %}
+            <td class="center radio-cell">
+                <img onclick="play(this.id)" id="{{ channel['name'] }}" class="radio-icon not-playing"
+                     src="{{ channel['image'] }}">
+            </td>
         {% endfor %}
         <td class="data-cell"></td>
     </tr>
     <tr>
         <td></td>
-        {% for playing in current_programs %}
-            {% if playing['channel']['name'].startswith('P4') %}
-                {% if 'Gotland' in playing['channel']['name'] %}
-                    <td class="center radio-cell">
-                        <h5 id="P4" class="playing-idle">{{ playing['channel']['currentscheduledepisode']['title'] }}</h5>
-                    </td>
-                {% endif %}
-            {% else %}
-                <td class="center radio-cell">
-                    <h5 id="{{ playing['channel']['name'] }}" class="playing-idle">{{ playing['channel']['currentscheduledepisode']['title'] }}</h5>
-                </td>
-            {% endif %}
+        {% for playing in radio %}
+
+            <td class="center radio-cell">
+                <h5 id="{{ playing['name'] }}" class="playing-idle">{{ playing['current_name'] }}</h5>
+            </td>
+
         {% endfor %}
         <td></td>
     </tr>
 </table>
-    <script>
-        updateUI();
-        setInterval(updateUI, 6000);
+<div class="center">
+    <i class="fa-solid fa-volume-low"></i> <input id="volume-control" type="range" min="0" max="100"> <i class="fa-solid fa-volume-high"></i>
+</div>
+<script>
+    updateUI();
+    setInterval(updateUI, 6000);
 
-        function updateUI() {
-            fetch("http://127.0.0.1:5000/update")
-                .then(response => response.json())
-                .then(msgObj => {
-                    let weatherData = msgObj[0];
-                    let mailDate = msgObj[1];
-                    let garbageDate = msgObj[2];
-                    let channels = msgObj[3];
-                    let currentPrograms = msgObj[4];
-                    let today = msgObj[5];
-                    document.getElementById("now").innerHTML = today.date;
-                    console.log(today);
-                    let nowWeatherIcon = document.getElementById("now-weather-icon");
-                    nowWeatherIcon.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.next_1_hour_icon;
-                    let windDir = document.getElementById("wind-direction");
-                    windDir.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.wind_direction;
-                    let next6HourIcon = document.getElementById("6-hour-icon");
-                    next6HourIcon.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.next_6_hour_icon;
-                    let next12HourIcon = document.getElementById("12-hour-icon");
-                    next12HourIcon.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.next_12_hour_icon;
-                    let airTemp = document.getElementById('now-temp');
-                    airTemp.innerHTML = weatherData.air_temp + "&#176;";
-                    let windSpeed = document.getElementById('wind-speed');
-                    windSpeed.innerHTML = weatherData.wind_speed + 'm/s';
-                    let airTemp6 = document.getElementById('6-hour-temp');
-                    airTemp6.innerHTML = weatherData.next_6_hour_min_temp + "&#176;";
-                    let airTemp12 = document.getElementById('12-hour-temp');
-                    airTemp12.innerHTML = weatherData.next_12_hour_temp + "&#176;";
-                    let mailDateText = document.getElementById('mail-date');
-                    mailDateText.innerHTML = mailDate;
-                    let garbageDateText = document.getElementById('garbage-date');
-                    garbageDateText.innerHTML = garbageDate;
+    let radioPlayer = document.createElement("AUDIO");
 
-                    let p1 = document.getElementById('P1');
-                    p1.innerHTML = currentPrograms[0].channel.currentscheduledepisode.program.name;
-                    let p2 = document.getElementById('P1');
-                    p2.innerHTML = currentPrograms[1].channel.currentscheduledepisode.program.name;
-                    let p3 = document.getElementById('P1');
-                    p3.innerHTML = currentPrograms[2].channel.currentscheduledepisode.program.name;
-                    let p4 = document.getElementById('P1');
-                    p4.innerHTML = currentPrograms[5].channel.currentscheduledepisode.program.name;
+    let volume = document.querySelector("#volume-control");
+    volume.addEventListener("change", function (e) {
+        radioPlayer.volume = e.currentTarget.value / 100;
+    })
 
-                })
-        }
-    </script>
+    let elems = document.body.getElementsByTagName("*");
+    console.log(elems);
+    function play(channel) {
+        fetch("http://127.0.0.1:5000/update")
+            .then(response => response.json())
+            .then(msgObj => {
+                let radio = msgObj.radio;
+                let id = channel === 'P1' ? 0 : channel === 'P2' ? 1 : channel === 'P3' ? 2 : 3;
+
+                let channelIcon = document.getElementById(channel);
+                let icons = [].slice.call(document.getElementsByClassName('radio-icon'));
+
+                for (let i = 0; i < 4; i++) {
+                    icons[i].src = radio[i].image;
+                }
+                radioPlayer.src = radio[id].stream;
+                if (channelIcon.classList.contains('not-playing')) {
+                    channelIcon.src = radio[id].current_image;
+                    radioPlayer.play();
+                    channelIcon.classList.add('playing');
+                    channelIcon.classList.remove('not-playing')
+                } else {
+                    channelIcon.src = radio[id].image;
+                    radioPlayer.pause();
+                    channelIcon.classList.add('not-playing')
+                    channelIcon.classList.remove('playing');
+                }
+            })
+    }
+
+    function updateUI() {
+        fetch("http://127.0.0.1:5000/update")
+            .then(response => response.json())
+            .then(msgObj => {
+                let weatherData = msgObj.weather;
+                let mailDate = msgObj.mail_date;
+                let garbageDate = msgObj.garbage_date;
+                let radio = msgObj.radio;
+                let today = msgObj.today;
+                document.getElementById("now").innerHTML = today.date;
+                let nowWeatherIcon = document.getElementById("now-weather-icon");
+                nowWeatherIcon.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.next_1_hour_icon;
+                let windDir = document.getElementById("wind-direction");
+                windDir.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.wind_direction;
+                let next6HourIcon = document.getElementById("6-hour-icon");
+                next6HourIcon.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.next_6_hour_icon;
+                let next12HourIcon = document.getElementById("12-hour-icon");
+                next12HourIcon.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.next_12_hour_icon;
+                let airTemp = document.getElementById('now-temp');
+                airTemp.innerHTML = weatherData.air_temp + "&#176;";
+                let windSpeed = document.getElementById('wind-speed');
+                windSpeed.innerHTML = weatherData.wind_speed + 'm/s';
+                let airTemp6 = document.getElementById('6-hour-temp');
+                airTemp6.innerHTML = weatherData.next_6_hour_min_temp + "&#176;";
+                let airTemp12 = document.getElementById('12-hour-temp');
+                airTemp12.innerHTML = weatherData.next_12_hour_temp + "&#176;";
+                let mailDateText = document.getElementById('mail-date');
+                mailDateText.innerHTML = mailDate;
+                let garbageDateText = document.getElementById('garbage-date');
+                garbageDateText.innerHTML = garbageDate;
+
+                let p1 = document.getElementById('P1');
+                p1.innerHTML = radio[0].current_name;
+                let p2 = document.getElementById('P1');
+                p2.innerHTML = radio[1].current_name;
+                let p3 = document.getElementById('P1');
+                p3.innerHTML = radio[2].current_name;
+                let p4 = document.getElementById('P1');
+                p4.innerHTML = radio[3].current_name;
+
+            })
+    }
+</script>
 </body>
 </html>

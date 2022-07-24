@@ -1,11 +1,14 @@
 import datetime
 import json
+import re
 import time
 
 import requests
 
-months = ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december']
+months = ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november',
+          'december']
 weekdays = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag']
+
 
 def degrees_to_cardinal(d):
     '''
@@ -13,8 +16,9 @@ def degrees_to_cardinal(d):
     '''
     dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
             "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
-    ix = int((d + 11.25)/22.5)
+    ix = int((d + 11.25) / 22.5)
     return dirs[ix % 16]
+
 
 def get_current_weather():
     headers = {
@@ -37,13 +41,16 @@ def get_current_weather():
     wind_speed = weather_data['properties']['timeseries'][i]['data']['instant']['details']['wind_speed']
     next_hour_icon = weather_data['properties']['timeseries'][i]['data']['next_1_hours']['summary']['symbol_code']
     next_6_hour_icon = weather_data['properties']['timeseries'][i]['data']['next_6_hours']['summary']['symbol_code']
-    next_6_hour_temp_max = weather_data['properties']['timeseries'][i]['data']['next_6_hours']['details']['air_temperature_max']
-    next_6_hour_temp_min = weather_data['properties']['timeseries'][i]['data']['next_6_hours']['details']['air_temperature_min']
+    next_6_hour_temp_max = weather_data['properties']['timeseries'][i]['data']['next_6_hours']['details'][
+        'air_temperature_max']
+    next_6_hour_temp_min = weather_data['properties']['timeseries'][i]['data']['next_6_hours']['details'][
+        'air_temperature_min']
     next_12_hour_icon = weather_data['properties']['timeseries'][i]['data']['next_12_hours']['summary']['symbol_code']
-    next_12_hour_temp = weather_data['properties']['timeseries'][i+12]['data']['instant']['details']['air_temperature']
+    next_12_hour_temp = weather_data['properties']['timeseries'][i + 12]['data']['instant']['details'][
+        'air_temperature']
     return {
         'air_temp': air_temp,
-        'wind_direction': degrees_to_cardinal(wind_dir)+'.png',
+        'wind_direction': degrees_to_cardinal(wind_dir) + '.png',
         'wind_speed': wind_speed,
         'next_1_hour_icon': f'{next_hour_icon}.png',
         'next_6_hour_icon': f'{next_6_hour_icon}.png',
@@ -60,7 +67,8 @@ def get_next_mail_date():
     delivery_day = delivery.split(' ')[0]
     delivery_month = months.index(delivery.split(' ')[1]) + 1
     now = datetime.datetime.now()
-    delivery_date = datetime.datetime.strptime(f'{delivery_day}-{delivery_month}-{now.year} 23:59:59', '%d-%m-%Y %H:%M:%S')
+    delivery_date = datetime.datetime.strptime(f'{delivery_day}-{delivery_month}-{now.year} 23:59:59',
+                                               '%d-%m-%Y %H:%M:%S')
     upcoming = data['upcoming'].split(',')[0]
     return delivery if delivery_date >= datetime.datetime.now() else upcoming
 
@@ -70,7 +78,7 @@ def get_next_garbage_date():
     while date.weekday() != 2 or int(date.strftime('%V')) % 2 != 0:
         date += datetime.timedelta(days=1)
 
-    return f'{date.day} {months[date.month-1]}'
+    return f'{date.day} {months[date.month - 1]}'
 
 
 def get_swim_temp():
@@ -80,6 +88,7 @@ def get_swim_temp():
 
 from collections import defaultdict
 
+
 def etree_to_dict(t):
     d = {t.tag: {} if t.attrib else None}
     children = list(t)
@@ -88,17 +97,18 @@ def etree_to_dict(t):
         for dc in map(etree_to_dict, children):
             for k, v in dc.items():
                 dd[k].append(v)
-        d = {t.tag: {k:v[0] if len(v) == 1 else v for k, v in dd.items()}}
+        d = {t.tag: {k: v[0] if len(v) == 1 else v for k, v in dd.items()}}
     if t.attrib:
         d[t.tag].update(('@' + k, v) for k, v in t.attrib.items())
     if t.text:
         text = t.text.strip()
         if children or t.attrib:
             if text:
-              d[t.tag]['#text'] = text
+                d[t.tag]['#text'] = text
         else:
             d[t.tag] = text
     return d
+
 
 def radio_channels():
     from xml.etree import cElementTree
@@ -112,14 +122,40 @@ def radio_channels():
         'stream': channel['liveaudio']['url']
     } for channel in channels]
 
+
 def now_playing(channel_id):
     url = f'https://api.sr.se/api/v2/scheduledepisodes/rightnow?channelid={channel_id}&format=json'
     return json.loads(requests.get(url).text)
 
+
+def radio_info():
+    channels = radio_channels()
+    channels = [channels[i] for i in [0, 1, 2, 5]]
+    playing_list = [now_playing(channel['id']) for channel in channels]
+    print()
+    return [
+        {
+            'id': channels[i]['id'],
+            'name': channels[i]['name'],
+            'image': channels[i]['image'],
+            'stream': channels[i]['stream'],
+            'current_name': playing_list[i]['channel']['currentscheduledepisode']['title'],
+            'current_description': playing_list[i]['channel']['currentscheduledepisode']['description'],
+            'current_image': playing_list[i]['channel']['currentscheduledepisode']['socialimage'],
+            'next_name': playing_list[i]['channel']['nextscheduledepisode']['title'],
+            'next_description': playing_list[i]['channel']['nextscheduledepisode']['description'],
+            'next_image': playing_list[i]['channel']['nextscheduledepisode']['socialimage'],
+
+
+        }
+        for i in range(4)
+    ]
+
+
 def day_info():
     today = datetime.datetime.now()
     day = today.day if today.day > 9 else f'0{today.day}'
-    month = months[today.month-1]
+    month = months[today.month - 1]
     year = today.year
     weekday = weekdays[datetime.datetime.weekday(datetime.datetime.now())]
     hour = today.hour if today.hour > 9 else f'0{today.hour}'
@@ -130,15 +166,12 @@ def day_info():
     }
     return data
 
+
 if __name__ == '__main__':
+    info = radio_info()
     get_next_mail_date()
     channels = radio_channels()
-    now_playing = [now_playing(channel['id']) for channel in channels]
-    day_info()
+
     print(get_current_weather())
     print(get_next_mail_date())
     print(get_next_garbage_date())
-
-
-
-

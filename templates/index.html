@@ -41,6 +41,7 @@
 
         .temp-cell {
             margin-top: 0;
+            padding-top: 0;
         }
 
         #volume-control {
@@ -78,13 +79,23 @@
         tr {
             margin-top: -5px;
         }
+        #update-time {
+            font-size: 8px;
+            color: #444;
+        }
+        .image-row {
+            margin-top: -5px;
+        }
+        .data-row {
+            margin-top: -5px;
+        }
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" rel="stylesheet" />
 </head>
 <body>
 <div class="center header">
-    <h1>Boge Mojner 192</h1>
-    <h2 id="now">{{ today['date'] }}</h2>
+    <h2>Boge Mojner 192</h2>
+    <h3 id="now">{{ today['date'] }}</h3>
 </div>
 <table class="full-table">
     <tr>
@@ -107,7 +118,7 @@
             <h2>Sopor</h2>
         </td>
     </tr>
-    <tr>
+    <tr class="image-row">
         <td class="data-cell">
             <img id="now-weather-icon"
                  src="{{ url_for('static', filename='/icons/' + weather_data['next_1_hour_icon']) }}" alt="Next Hour">
@@ -131,7 +142,7 @@
             <img src="{{ url_for('static', filename='/icons/trash.png') }}" alt="Next Hour">
         </td>
     </tr>
-    <tr>
+    <tr class="data-row">
         <td class="data-cell temp-cell">
             <h2 id="now-temp">{{ weather_data['air_temp'] }}&#176;</h2>
         </td>
@@ -169,7 +180,7 @@
         {% for playing in radio %}
 
             <td class="center radio-cell">
-                <h5 id="{{ playing['name'] }}" class="playing-idle">{{ playing['current_name'] }}</h5>
+                <h5 id="{{ playing['name'] }}-text" class="playing-idle">{{ playing['current_name'] }}</h5>
             </td>
 
         {% endfor %}
@@ -177,13 +188,16 @@
     </tr>
 </table>
 <div class="center">
+    <span id="update-time"></span>
     <i class="fa-solid fa-volume-low"></i> <input id="volume-control" type="range" min="0" max="100"> <i class="fa-solid fa-volume-high"></i>
 </div>
 <script>
     updateUI();
-    setInterval(updateUI, 6000);
+    setInterval(updateUI, 1000);
 
     let radioPlayer = document.createElement("AUDIO");
+
+    let players = [false, false, false, false];
 
     let volume = document.querySelector("#volume-control");
     volume.addEventListener("change", function (e) {
@@ -191,7 +205,7 @@
     })
 
     let elems = document.body.getElementsByTagName("*");
-    console.log(elems);
+
     function play(channel) {
         fetch("http://127.0.0.1:5000/update")
             .then(response => response.json())
@@ -204,9 +218,15 @@
 
                 for (let i = 0; i < 4; i++) {
                     icons[i].src = radio[i].image;
+                    if(i === id) {
+                        players[id] = !players[id];
+                    }
+                    else {
+                        players[i] = false;
+                    }
                 }
                 radioPlayer.src = radio[id].stream;
-                if (channelIcon.classList.contains('not-playing')) {
+                if (players[id]) {
                     channelIcon.src = radio[id].current_image;
                     radioPlayer.play();
                     channelIcon.classList.add('playing');
@@ -229,7 +249,8 @@
                 let garbageDate = msgObj.garbage_date;
                 let radio = msgObj.radio;
                 let today = msgObj.today;
-                document.getElementById("now").innerHTML = today.date;
+                document.getElementById("now").innerHTML = today.date + " " + today.time;
+                // document.getElementById("update-time").innerHTML = today.time;
                 let nowWeatherIcon = document.getElementById("now-weather-icon");
                 nowWeatherIcon.src = 'http://127.0.0.1:5000/static/icons/' + weatherData.next_1_hour_icon;
                 let windDir = document.getElementById("wind-direction");
@@ -251,15 +272,43 @@
                 let garbageDateText = document.getElementById('garbage-date');
                 garbageDateText.innerHTML = garbageDate;
 
-                let p1 = document.getElementById('P1');
-                p1.innerHTML = radio[0].current_name;
-                let p2 = document.getElementById('P1');
-                p2.innerHTML = radio[1].current_name;
-                let p3 = document.getElementById('P1');
-                p3.innerHTML = radio[2].current_name;
-                let p4 = document.getElementById('P1');
-                p4.innerHTML = radio[3].current_name;
+                let p1Text = document.getElementById('P1-text');
+                p1Text.innerHTML = radio[0].current_name;
+                let p2Text = document.getElementById('P2-text');
+                p2Text.innerHTML = radio[1].current_name;
+                let p3Text = document.getElementById('P3-text');
+                p3Text.innerHTML = radio[2].current_name;
+                let p4Text = document.getElementById('P4-text');
+                p4Text.innerHTML = radio[3].current_name;
 
+                let p1 = document.getElementById('P1');
+                let p2 = document.getElementById('P2');
+                let p3 = document.getElementById('P3');
+                let p4 = document.getElementById('P4');
+
+                if (players[0]) {
+                    p1.src = radio[0].current_image;
+                } else {
+                    p1.src = radio[0].image;
+                }
+
+                if (players[1]) {
+                    p2.src = radio[1].current_image;
+                } else {
+                    p2.src = radio[1].image;
+                }
+
+                if (players[2]) {
+                    p3.src = radio[2].current_image;
+                } else {
+                    p3.src = radio[2].image;
+                }
+
+                if (players[3]) {
+                    p4.src = radio[3].current_image;
+                } else {
+                    p4.src = radio[3].image;
+                }
             })
     }
 </script>

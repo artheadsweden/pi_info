@@ -132,7 +132,7 @@ def radio_info():
     channels = radio_channels()
     channels = [channels[i] for i in [0, 1, 2, 5]]
     playing_list = [now_playing(channel['id']) for channel in channels]
-    print()
+    channels[3]['name'] = 'P4'
     return [
         {
             'id': channels[i]['id'],
@@ -162,7 +162,8 @@ def day_info():
     minute = today.minute if today.minute > 9 else f'0{today.minute}'
     second = today.second if today.second > 9 else f'0{today.second}'
     data = {
-        'date': f'{weekday} {day} {month} {year}'
+        'date': f'{weekday} {day} {month} {year}',
+        'time': f'{hour}:{minute}'
     }
     return data
 

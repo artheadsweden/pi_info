@@ -5,6 +5,7 @@ from controller import get_next_mail_date, get_next_garbage_date, get_current_we
 
 app = Flask(__name__)
 
+
 def update():
     weather_data = get_current_weather()
     mail_date = get_next_mail_date()
@@ -12,6 +13,7 @@ def update():
     radio = radio_info()
     today = day_info()
     return weather_data, mail_date, garbage_date, radio, today
+
 
 @app.get('/')
 def index():
